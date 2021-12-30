@@ -5,7 +5,7 @@ from .. import models
 from .. database import  get_db
 from fastapi import  Depends, status, HTTPException, APIRouter
 from sqlalchemy.orm import Session
-from app import schemas
+from user_model import schemas
 from ..utils import hash
 
 router = APIRouter(tags=['Blog'])
@@ -31,19 +31,18 @@ def get_one(id : int, db: Session = Depends(get_db)):
     posts = db.query(models.Blog).filter(models.Blog.id == id).first()
     print(posts)
     if not posts:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail= "Blog with this id doesnt exist")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail= "Blog with this id {id} doesnt exist")
     return posts
 
-@router.put("/update/{id}", status_code=status.HTTP_202_ACCEPTED)
+@router.put("/update/{id}", status_code=status.HTTP_202_ACCEPTED, response_model=schemas.ShowBlog)
 def update(id: int, post: Posts, db: Session = Depends(get_db)):
     posts = db.query(models.Blog).filter(models.Blog.id == id)
     if not posts.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"blog with id {id} not found")
     posts.update(post.dict())
     db.commit()
+    posts = db.query(models.Blog).filter(models.Blog.id == id).first()
     return posts
-
-
 
 @router.delete("/delete/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def destroy(id,db:Session = Depends(get_db)):
