@@ -5,7 +5,7 @@ from .. import models
 from .. database import  get_db
 from fastapi import  Depends, status, HTTPException, APIRouter
 from sqlalchemy.orm import Session
-from app import schemas
+from app import oauth2, schemas
 from ..utils import hash
 
 router = APIRouter(tags=['Blog'])
@@ -18,8 +18,9 @@ def get_post(db: Session = Depends(get_db)):
     return posts
     
 @router.post("/create", status_code=status.HTTP_201_CREATED)
-def create_post(post: Posts, db: Session = Depends(get_db)):
+def create_post(post: Posts, db: Session = Depends(get_db), current_user:int=Depends(oauth2.get_current_user)):
     # new_post = models.Post(**post.dict())
+    print(current_user.email)
     new_post = models.Blog(title=post.title, content=post.content, published = post.published)
     db.add(new_post)
     db.commit()
@@ -45,7 +46,7 @@ def update(id: int, post: Posts, db: Session = Depends(get_db)):
     return posts
 
 @router.delete("/delete/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def destroy(id,db:Session = Depends(get_db)):
+def destroy(id,db:Session = Depends(get_db), current_user:int=Depends(oauth2.get_current_user)):
     posts = db.query(models.Blog).filter(models.Blog.id == id)
     if not posts.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"blog with id {id} not found")
